@@ -1,38 +1,37 @@
-import urllib.request
+ # from http://www.yiibai.com/python/python3-webbug-series2.html
 import re
+import urllib.request
+import urllib
 
-########################################################
-#
-# fetch函数功能：抓取“陕西建筑招标网”的第一页“招标公告”页面，输出公告名字
-#
-#             参数baseUrl是要访问的网站地址
-#
-########################################################
+from collections import deque
 
-def fetch(baseUrl):
+queue = deque()
+visited = set()
 
-    # 第1步：模拟浏览器发送请求
-    data = urllib.request.urlopen(baseUrl).read()  #二进制字节形式
-    data = data.decode('utf-8')
+url = 'http://news.dbanotes.net'  # 入口页面, 可以换成别的
 
-    # 第2步：页面返回后，利用正则表达式提取想要的内容
-    nameList=[]
-    nameList = re.compile(r'target="_blank" title="(.*?)"',re.DOTALL).findall(data)
+queue.append(url)
+cnt = 0
 
-    # 第3步：返回在页面上析取的“标题名”
-    return nameList
+while queue:
+  url = queue.popleft()  # 队首元素出队
+  visited |= {url}  # 标记为已访问
 
-#######     执行    ########
-if __name__ =="__main__":
+  print('已经抓取: ' + str(cnt) + '   正在抓取 <---  ' + url)
+  cnt += 1
+  urlop = urllib.request.urlopen(url)
+  if 'html' not in urlop.getheader('Content-Type'):
+    continue
 
-    #要抓取的网页地址
-    url = "http://www.sxszbb.com/sxztb/jyxx/001001/MoreInfo.aspx?CategoryNum=001001"
+  # 避免程序异常中止, 用try..catch处理异常
+  try:
+    data = urlop.read().decode('utf-8')
+  except:
+    continue
 
-    #存放到名字列表中
-    NameList = fetch(url)
-
-    # 输出 NameList
-    Length = len(NameList)
-    for i in range(0, Length):
-        print("标题名%d:%s\n"%(i+1, NameList[i]))
-
+  # 正则表达式提取页面中所有队列, 并判断是否已经访问过, 然后加入待爬队列
+  linkre = re.compile('href=\"(.+?)\"')
+  for x in linkre.findall(data):
+    if 'http' in x and x not in visited:
+      queue.append(x)
+      print('加入队列 --->  ' + x)
