@@ -1,3 +1,5 @@
+ # from http://www.yiibai.com/python/python3-webbug-series3.html
+
 import urllib.request
 import http.cookiejar
 
